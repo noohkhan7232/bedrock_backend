@@ -1,0 +1,175 @@
+services:
+  mailpit:
+    container_name: bedrock_mailpit_dev
+    image: axllent/mailpit:v1.29
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+    volumes:
+      - bedrock_mailpit_data:/data
+    environment:
+      MP_DATABASE: /data/mailpit.db
+  postgres:
+    container_name: bedrock_postgres_dev
+    image: postgres:18.3
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=$POSTGRES_DB
+      - POSTGRES_USER=$POSTGRES_USER
+      - POSTGRES_PASSWORD=$POSTGRES_PASSWORD
+    ports:
+      - $POSTGRES_PORT:5432
+    volumes:
+      - bedrock_pgdata_dev:/var/lib/postgresql
+  postgres_test:
+    container_name: bedrock_postgres_test
+    image: postgres:18.3
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=bedrock_postgres_test
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=postgres_test
+    ports:
+      - 15432:5432
+    volumes:
+      - bedrock_pgdata_test:/var/lib/postgresql
+  redis:
+    container_name: bedrock_redis_dev
+    image: redis:7.4
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ['redis-server', '--save', '', '--appendonly', 'no']
+  redis_test:
+    container_name: bedrock_redis_test
+    image: redis:7.4
+    restart: unless-stopped
+    ports:
+      - "16379:6379"
+    command: ['redis-server', '--save', '', '--appendonly', 'no']
+  celery_default:
+    container_name: bedrock_celery_default
+    build:
+      context: .
+      dockerfile: Dockerfile.celery.dev
+    command: >
+      celery -A config worker
+      -Q default
+      --concurrency 1
+      --loglevel=INFO
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+    depends_on:
+      - redis
+      - postgres
+  celery_llm:
+    container_name: bedrock_celery_llm
+    build:
+      context: .
+      dockerfile: Dockerfile.celery.dev
+    command: >
+      celery -A config worker
+      -Q llm
+      --concurrency 2
+      --loglevel=INFO
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+    depends_on:
+      - redis
+      - postgres
+  celery_beat_default:
+    container_name: bedrock_celery_beat_default
+    build:
+      context: .
+      dockerfile: Dockerfile.celery.dev
+    command: >
+      celery -A config beat
+      --loglevel=INFO
+      --scheduler django_celery_beat.schedulers:DatabaseScheduler
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/1
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+    depends_on:
+      - redis
+      - postgres
+  celery_default_test:
+    container_name: bedrock_celery_default_test
+    build:
+      context: .
+      dockerfile: Dockerfile.celery.dev
+    command: >
+      celery -A config worker
+      -Q default
+      --concurrency 1
+      --loglevel=INFO
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - CELERY_BROKER_URL=redis://redis_test:6379/0
+      - POSTGRES_HOST=postgres_test
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=bedrock_postgres_test
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=postgres_test
+      - CELERY_RESULT_BACKEND=redis://redis_test:6379/1
+    depends_on:
+      - redis_test
+      - postgres_test
+  celery_llm_test:
+    container_name: bedrock_celery_llm_test
+    build:
+      context: .
+      dockerfile: Dockerfile.celery.dev
+    command: >
+      celery -A config worker
+      -Q llm
+      --concurrency 2
+      --loglevel=INFO
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings
+      - CELERY_BROKER_URL=redis://redis_test:6379/0
+      - POSTGRES_HOST=postgres_test
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=bedrock_postgres_test
+      - POSTGRES_USER=user
+      - POSTGRES_PASSWORD=postgres_test
+      - CELERY_RESULT_BACKEND=redis://redis_test:6379/1
+    depends_on:
+      - redis_test
+      - postgres_test
+
+volumes:
+  bedrock_mailpit_data:
+  bedrock_pgdata_dev:
+  bedrock_pgdata_test:

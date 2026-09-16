@@ -6,7 +6,7 @@
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-blue)
 [![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
-Production-oriented Django API boilerplate for enterprise multi-tenant SaaS.
+Production-oriented Django API boilerplate for enterprise multi-tenant SaaS. 
 
 Bedrock Backend gives you the backend foundation that serious SaaS products usually
 have to assemble from scratch: tenant-aware domain modeling, JWT authentication,

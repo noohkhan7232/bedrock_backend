@@ -3,10 +3,10 @@
 ![Python](https://img.shields.io/badge/Python-3.14-blue)
 ![Django](https://img.shields.io/badge/Django-5.2-green)
 ![DRF](https://img.shields.io/badge/DRF-3.17-red)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-blue)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-18-blue) 
 [![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
-Production-oriented Django API boilerplate for enterprise multi-tenant SaaS.
+Production-oriented Django API boilerplate for enterprise multi-tenant SaaS. 
 
 Bedrock Backend gives you the backend foundation that serious SaaS products usually
 have to assemble from scratch: tenant-aware domain modeling, JWT authentication,
